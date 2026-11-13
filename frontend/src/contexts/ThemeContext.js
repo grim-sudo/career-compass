@@ -11,15 +11,16 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // Get initial theme from localStorage or default to dark
+  // An explicit preference wins over the operating system theme.
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved ? saved === 'dark' : true; // Default to dark mode
+    return saved ? saved === 'dark' : !!window.matchMedia?.('(prefers-color-scheme: dark)').matches;
   });
 
   // Save theme to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    document.documentElement.dataset.theme = isDarkMode ? 'dark' : 'light';
   }, [isDarkMode]);
 
   const toggleTheme = () => {

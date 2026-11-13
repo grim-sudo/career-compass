@@ -1,0 +1,10 @@
+const assert = require("node:assert/strict");
+process.env.NODE_ENV = "development";
+delete process.env.DANGEROUSLY_DISABLE_HOST_CHECK;
+require("./start.cjs");
+const createConfig = require("react-scripts/config/webpackDevServer.config");
+const config = createConfig([{ context: "/api", target: "http://localhost:5000" }], undefined);
+assert.deepEqual(config.allowedHosts, ["localhost"]);
+assert.ok(["localhost", "127.0.0.1", "::1"].includes(config.host));
+require("schema-utils").validate(require("webpack-dev-server/lib/options.json"), config);
+console.log("CRA loopback host-check configuration passed");

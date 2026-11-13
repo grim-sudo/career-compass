@@ -49,3 +49,4 @@ coverage/
 .parcel-cache/
 .firebase/
 firebase-debug.log
+.playwright-mcp/

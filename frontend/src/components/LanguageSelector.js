@@ -38,9 +38,9 @@ function LanguageSelector() {
         onChange={handleChange} 
         aria-label="Select language"
       >
-        {supportedLanguages.map(({ code, name, flag }) => (
+        {supportedLanguages.map(({ code, name }) => (
           <option key={code} value={code}>
-            {flag} {name}
+            {name}
           </option>
         ))}
       </select>

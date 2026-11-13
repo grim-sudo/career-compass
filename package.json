@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Career Compass - AI-powered career guidance platform",
   "scripts": {
-    "install-all": "cd frontend && npm install && cd ../backend && npm install",
+    "setup:local": "node scripts/setup-local.cjs",
+    "start:local": "docker compose up --build -d --wait",
+    "stop:local": "docker compose down",
+    "install-all": "npm ci --prefix backend --ignore-scripts --no-audit --no-fund && npm ci --prefix frontend --ignore-scripts --no-audit --no-fund",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "start:frontend": "cd frontend && npm start",
     "start:backend": "cd backend && npm start",

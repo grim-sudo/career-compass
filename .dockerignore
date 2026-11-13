@@ -1,0 +1,12 @@
+.git
+.playwright-mcp
+**/node_modules
+**/build
+**/.env
+**/.env.*
+**/coverage
+**/*.log
+tasks
+frontend/public/images/journey.webp
+frontend/public/images/mountains.webp
+frontend/public/images/study.webp

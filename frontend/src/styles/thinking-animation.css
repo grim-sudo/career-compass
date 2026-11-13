@@ -1,54 +1,5 @@
-.thinking-container {
-  display: flex;
-  align-items: center;
-  padding: 15px 20px;
-  margin: 10px 0;
-  max-width: fit-content;
-}
-
-.thinking-dots {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.thinking-dots .dot {
-  width: 8px;
-  height: 8px;
-  background-color: #666;
-  border-radius: 50%;
-  animation: bounce 1.4s infinite ease-in-out both;
-}
-
-.thinking-dots .dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.thinking-dots .dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-.thinking-dots .dot:nth-child(3) {
-  animation-delay: 0s;
-}
-
-@keyframes bounce {
-  0%, 80%, 100% {
-    transform: translateY(0);
-    opacity: 0.7;
-  }
-  40% {
-    transform: translateY(-12px);
-    opacity: 1;
-  }
-}
-
-/* Dark mode support */
-.dark .thinking-dots .dot {
-  background-color: #aaa;
-}
-
-/* Light mode support */
-.light .thinking-dots .dot {
-  background-color: #555;
-}
+.thinking-container { max-width: 760px; margin: 24px auto; padding: 0 8px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 14px; }
+.thinking-dots { display: flex; gap: 5px; }
+.thinking-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .thinking-dots span { animation: thinking 1s ease-in-out infinite alternate; } .thinking-dots span:nth-child(2) { animation-delay: .2s; } .thinking-dots span:nth-child(3) { animation-delay: .4s; } }
+@keyframes thinking { to { opacity: .3; transform: translateY(-3px); } }

@@ -1,0 +1,11 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const { randomBytes } = require('node:crypto');
+const root = path.join(__dirname, '..');
+const composeEnv = path.join(root, '.env');
+const backendEnv = path.join(root, 'backend/.env');
+if (!fs.existsSync(composeEnv)) fs.writeFileSync(composeEnv, `POSTGRES_PASSWORD=${randomBytes(24).toString('hex')}\nAPP_PORT=3000\n`, { mode: 0o600, flag: 'wx' });
+else if (!/^POSTGRES_PASSWORD=.+$/m.test(fs.readFileSync(composeEnv, 'utf8'))) throw new Error('Existing root .env has no POSTGRES_PASSWORD. Add one without overwriting other settings.');
+if (!fs.existsSync(backendEnv)) fs.copyFileSync(path.join(root, 'backend/.env.example'), backendEnv, fs.constants.COPYFILE_EXCL);
+fs.chmodSync(backendEnv, 0o600);
+console.log('Local configuration ready. In backend/.env, choose AI_PROVIDER=gemini|openai|claude and set GEMINI_API_KEY, OPENAI_API_KEY or ANTHROPIC_API_KEY respectively, then run npm run start:local. Existing settings were preserved.');

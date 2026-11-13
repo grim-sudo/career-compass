@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./services/firebase";
+import { subscribeAuth, loadSession } from './services/localApi';
 import { ThemeProvider } from "./contexts/ThemeContext";
 import LandingPage from "./pages/LandingPage";
 import ChatInterface from "./components/ChatInterface";
-import TeacherJoeAvatar from "./pages/TeacherJoeAvatar";
+const TeacherJoeAvatar = lazy(() => import('./pages/TeacherJoeAvatar'));
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState('');
   const [showModel, setShowModel] = useState(false);
 
   // Check authentication state on mount and persist
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = subscribeAuth((user) => {
       setIsAuthenticated(!!user);
-      setLoading(false);
     });
+    loadSession().catch(() => setSessionError('Cannot connect to Career Compass. Check that the Docker app and database are healthy, then retry.')).finally(() => setLoading(false));
 
     return () => unsubscribe();
   }, []);
+  if (sessionError) return <div className="screen-loading"><p role="alert">{sessionError}</p><button className="button" onClick={() => window.location.reload()}>Retry connection</button></div>;
 
   // Function to toggle between chat and model views
   const toggleModelView = (shouldShow) => {
@@ -30,17 +31,7 @@ function App() {
   // Show loading while checking auth
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        color: '#f1f5f9',
-        fontSize: '1.25rem'
-      }}>
-        Loading...
-      </div>
+      <div className="screen-loading" role="status"><p>Opening Career Compass...</p><div className="loading-bars" aria-hidden="true"><span /><span /></div></div>
     );
   }
 
@@ -57,13 +48,8 @@ function App() {
             element={
               isAuthenticated ? (
                 <div className="main-layout">
-                  {showModel ? (
-                    // Teacher Joe Avatar
-                    <TeacherJoeAvatar onToggleView={toggleModelView} /> 
-                  ) : (
-                    // Chat Interface
-                    <ChatInterface onToggleView={toggleModelView} />
-                  )}
+                  <div hidden={showModel}><ChatInterface onToggleView={toggleModelView} /></div>
+                  {showModel && <Suspense fallback={<div className="screen-loading" role="status">Opening voice studio...</div>}><TeacherJoeAvatar onToggleView={toggleModelView} /></Suspense>}
                 </div>
               ) : (
                 <Navigate to="/" replace />

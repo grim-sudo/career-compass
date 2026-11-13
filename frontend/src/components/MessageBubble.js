@@ -1,6 +1,6 @@
 import React from 'react';
 
-function MessageBubble({ sender, text }) {
+function MessageBubble({ sender, text, children }) {
   const isUser = sender === 'user';
   
   // Format text to handle basic markdown-like patterns
@@ -54,7 +54,7 @@ function MessageBubble({ sender, text }) {
       }
       
       // Handle bullet points (*, -, •, •*)
-      const bulletMatch = line.trim().match(/^([*\-•]|•\*)\s*(.*)$/);
+      const bulletMatch = line.trim().match(/^(•\*|[*\-•])\s+(.*)$/);
       if (bulletMatch) {
         const content = bulletMatch[2].trim();
         const formattedContent = processBoldText(content, index);
@@ -78,9 +78,10 @@ function MessageBubble({ sender, text }) {
   };
   
   return (
-    <div className={`chat-bubble ${isUser ? 'user' : 'bot'}`}>
-      {formatText(text)}
-    </div>
+    <article className={`message-row ${isUser ? 'user' : 'bot'} screen-enter`}>
+      <span className="message-author">{isUser ? 'You' : 'Career Compass'}</span>
+      <div className={`chat-bubble ${isUser ? 'user' : 'bot'}`}>{formatText(text)}{children}</div>
+    </article>
   );
 }
 

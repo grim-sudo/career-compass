@@ -1,256 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
-import { auth, provider } from "../services/firebase";
-import "../styles/auth-beautiful.css";
-import { clearHistory } from '../utils/Storage';
-import { useNavigate } from "react-router-dom";
+import { ArrowRight } from '@phosphor-icons/react';
+import { authenticate, subscribeAuth, logout as signOut } from '../services/localApi';
+import '../styles/auth-beautiful.css';
 
-function LoginForm({ onLoginSuccess }) {
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const navigate = useNavigate();
-  const [theme, setTheme] = useState('light');
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
-      alert(`Logged in as ${userCredential.user.email}`);
-      onLoginSuccess?.();
-      navigate("/chat");
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      const result = await signInWithPopup(auth, provider);
-      alert(`Welcome ${result.user.displayName}`);
-      onLoginSuccess?.();
-      navigate("/chat");
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
-  return (
-    <form className="form" onSubmit={handleSubmit}>
-      <h2>Login</h2>
-      <div className="input-group">
-        <input
-          type="email"
-          name="email"
-          required
-          placeholder=" "
-          value={formData.email}
-          onChange={handleChange}
-        />
-        <label>Email</label>
-      </div>
-      <div className="input-group">
-        <input
-          type="password"
-          name="password"
-          required
-          placeholder=" "
-          value={formData.password}
-          onChange={handleChange}
-        />
-        <label>Password</label>
-      </div>
-      <button type="submit">Login</button>
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        style={{
-          marginTop: "10px",
-          backgroundColor: "#4285F4",
-          color: "#fff",
-          border: "none",
-          padding: "10px",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontWeight: "600",
-        }}
-      >
-        Sign in with Google
-      </button>
-    </form>
-  );
-}
-
-function SignupForm({ onSignupSuccess }) {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
-      alert(`Account created for: ${formData.username}`);
-      onSignupSuccess?.();
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
-  return (
-    <form className="form" onSubmit={handleSubmit}>
-      <h2>Sign Up</h2>
-      <div className="input-group">
-        <input
-          type="text"
-          name="username"
-          required
-          placeholder=" "
-          value={formData.username}
-          onChange={handleChange}
-        />
-        <label>Username</label>
-      </div>
-      <div className="input-group">
-        <input
-          type="email"
-          name="email"
-          required
-          placeholder=" "
-          value={formData.email}
-          onChange={handleChange}
-        />
-        <label>Email</label>
-      </div>
-      <div className="input-group">
-        <input
-          type="password"
-          name="password"
-          required
-          placeholder=" "
-          value={formData.password}
-          onChange={handleChange}
-        />
-        <label>Password</label>
-      </div>
-      <button type="submit">Sign Up</button>
-    </form>
-  );
-}
-
-function AuthPage({ onAuthSuccess }) {
-  const [isLogin, setIsLogin] = useState(true);
-  const [theme, setTheme] = useState("light");
+export default function AuthPage({ onAuthSuccess, initialMode = 'login' }) {
+  const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [user, setUser] = useState(null);
+  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => subscribeAuth(setUser), []);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const logout = () => {
-    clearHistory(); // Clear all chat history on logout
-    signOut(auth);
+  const handleChange = (event) => setFormData({ ...formData, [event.target.name]: event.target.value });
+  const handleAuthenticate = async () => {
+    if (pending) return;
+    setPending(true);
+    setError('');
+    try {
+      await authenticate(isLogin ? 'login' : 'signup', formData);
+      onAuthSuccess?.();
+    } catch (failure) {
+      setError(failure.message || 'Unable to sign in. Check your connection and try again.');
+    } finally {
+      setPending(false);
+    }
   };
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+
+  const logout = async () => {
+    try { await signOut(); }
+    catch { setError('Unable to log out. Please try again.'); }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-background">
-        <div className="auth-overlay"></div>
+    <div className="auth-card">
+      <div className="auth-heading">
+        <h2 id="auth-title">{user ? 'Welcome back.' : isLogin ? 'Your career questions, saved.' : 'Start exploring careers.'}</h2>
+        <p>{user ? 'Your workspace is ready when you are.' : 'A local account for your conversations and learning plans.'}</p>
       </div>
-      
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <div className="logo-section">
-              <div className="logo-icon">🎓</div>
-              <h1 className="app-title">Career Copilot</h1>
-            </div>
-            <p className="app-subtitle">Your AI-Powered Education & Career Assistant</p>
-          </div>
-
-          {user ? (
-            <div className="user-profile">
-              <div 
-                className="profile-avatar clickable" 
-                onClick={onAuthSuccess}
-                title="Click to continue to chat"
-                style={{ cursor: 'pointer' }}
-              >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="Profile" />
-                ) : (
-                  <div className="avatar-placeholder">{user.email?.[0]?.toUpperCase()}</div>
-                )}
-              </div>
-              <h3 className="profile-name">Welcome, {user.displayName || user.email}</h3>
-              <p className="profile-email">{user.email}</p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                <button className="continue-button" onClick={onAuthSuccess}>
-                  Continue to Chat →
-                </button>
-                <button className="logout-button" onClick={logout}>
-                  <span>🚪</span> Logout
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="auth-tabs">
-                <button
-                  className={`auth-tab ${isLogin ? "active" : ""}`}
-                  onClick={() => setIsLogin(true)}
-                >
-                  Login
-                </button>
-                <button
-                  className={`auth-tab ${!isLogin ? "active" : ""}`}
-                  onClick={() => setIsLogin(false)}
-                >
-                  Sign Up
-                </button>
-              </div>
-
-              <div className="auth-form-wrapper">
-                {isLogin ? (
-                  <LoginForm onLoginSuccess={onAuthSuccess} />
-                ) : (
-                  <SignupForm onSignupSuccess={onAuthSuccess} />
-                )}
-              </div>
-            </>
-          )}
-
-          <div className="auth-footer">
-            <p>🎯 Get personalized career guidance</p>
-            <p>📚 Access educational resources</p>
-            <p>💼 Plan your professional journey</p>
-          </div>
+      {user ? (
+        <div className="auth-profile">
+          <p>{user.displayName || user.email}</p>
+          <button className="button button-primary" onClick={onAuthSuccess}>Continue to Chat <ArrowRight size={18} /></button>
+          <button className="button button-quiet" onClick={logout}>Log out</button>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="auth-tabs" aria-label="Account access">
+            {['Login', 'Sign Up'].map((label, index) => <button key={label} type="button" className={isLogin === !index ? 'active' : ''} aria-pressed={isLogin === !index} disabled={pending} onClick={() => { setIsLogin(!index); setError(''); }}>{label}</button>)}
+          </div>
+          <form className="auth-form screen-enter" key={isLogin ? 'login' : 'signup'} onSubmit={event => { event.preventDefault(); handleAuthenticate(); }} aria-busy={pending}>
+            {!isLogin && <div className="auth-field"><label htmlFor="auth-username">Name</label><input id="auth-username" name="username" autoComplete="nickname" maxLength={80} required value={formData.username} onChange={handleChange} disabled={pending} /></div>}
+            <div className="auth-field"><label htmlFor="auth-email">Email</label><input id="auth-email" type="email" name="email" autoComplete="email" required value={formData.email} onChange={handleChange} placeholder="you@example.com" disabled={pending} /></div>
+            <div className="auth-field"><label htmlFor="auth-password">Password</label><input id="auth-password" type="password" name="password" autoComplete={isLogin ? 'current-password' : 'new-password'} minLength={isLogin ? undefined : 12} maxLength={128} required value={formData.password} onChange={handleChange} aria-describedby={!isLogin ? 'password-help' : undefined} disabled={pending} />{!isLogin && <small id="password-help">At least 12 characters. A few memorable words work well.</small>}</div>
+            {error && <p className="auth-error" role="alert">{error}</p>}
+            <button className="button button-primary" type="submit" disabled={pending}>{pending ? 'Connecting...' : isLogin ? 'Login' : 'Sign Up'} <ArrowRight size={18} /></button>
+          </form>
+        </>
+      )}
+      {user && error && <p className="auth-error" role="alert">{error}</p>}
+      <p className="auth-note">A thoughtful space for your education and career.</p>
     </div>
   );
 }
-
-export default AuthPage;
