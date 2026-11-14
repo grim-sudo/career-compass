@@ -43,7 +43,7 @@ Open **http://localhost:3000** and create a local account. Docker installs the
 application dependencies and builds the frontend; a host-side `npm install` is
 not required for this workflow. No Firebase or cloud database setup is needed.
 
-See [Setup.md](Setup.md) for configuration, troubleshooting, backups, and native
+See [SETUP.md](SETUP.md) for configuration, troubleshooting, backups, and native
 development.
 
 ## Configuration
